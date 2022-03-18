@@ -1,8 +1,11 @@
 package main
 
-import "awesomeProject/ch5"
+import "fmt"
 
 func main() {
-	ch5.FindlinksMain()
+	ch := make(chan int, 1)
+	ch <- 1
+	x := <-ch
+	fmt.Println(x)
 
 }
