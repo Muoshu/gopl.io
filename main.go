@@ -18,9 +18,9 @@ type Node struct {
 	//机器人数 被监控的房间数
 	robotNum, roomNum int
 	//机器人位置
-	robotPos [][]int
+	robotPos [30][30]int
 	//被监视的房间位置
-	roomWatched [][]int
+	roomWatched [30][30]int
 	//堆中的索引
 	index int
 }
@@ -28,22 +28,19 @@ type Node struct {
 // PriorityQueue 一个实现了 heap.Interface 接口的优先队列，队列中包含任意多个 Item 结构。
 type PriorityQueue []*Node
 
-var pq PriorityQueue = make(PriorityQueue, m*n)
+var pq PriorityQueue
 
 func main() {
 	//机器人最多的数量
 	ans := m*n/3 + 2
-	ansArr := make([][]int, m)
-	for i := 0; i < n; i++ {
-		ansArr[i] = make([]int, n)
-	}
+	var ansArr [30][30]int
 	//初始化
 	var node Node
 	node = initNode(node)
-	heap.Init(&pq)
 
 	//放入快照队列
-	pq.Push(node)
+	heap.Push(&pq, node)
+	heap.Init(&pq)
 	for pq.Len() > 0 {
 		p := heap.Pop(&pq).(*Node)
 
@@ -93,61 +90,6 @@ func rowAndColumn() (int, int) {
 	n, _ := strconv.Atoi(info[1])
 	return m, n
 }
-func (pq PriorityQueue) Len() int { return len(pq) }
-
-func (pq PriorityQueue) Less(i, j int) bool {
-	// 我们希望 Pop 返回的是最大值而不是最小值，
-	// 因此这里使用大于号进行对比。
-	if pq[i].roomNum > pq[j].roomNum {
-		return true
-	}
-	return false
-}
-
-func (pq PriorityQueue) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-	pq[i].index = i
-	pq[j].index = j
-}
-
-func (pq *PriorityQueue) Push(x interface{}) {
-	n := len(*pq)
-	item := x.(*Node)
-	item.index = n
-	*pq = append(*pq, item)
-}
-
-func initNode(node Node) Node {
-	node.i = 1
-	node.j = 1
-
-	//在博物馆上下扩充两行
-	for i := 0; i < m+1; i++ {
-		node.roomWatched[i][0] = 1
-		node.roomWatched[i][m+1] = 1
-	}
-	//在博物馆左右扩充两列
-	for i := 0; i < n+1; i++ {
-		node.roomWatched[0][i] = 1
-		node.roomWatched[n+1][i] = 1
-	}
-	return node
-}
-
-func (pq *PriorityQueue) Pop() interface{} {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	item.index = -1 // 为了安全性考虑而做的设置
-	*pq = old[0 : n-1]
-	return item
-}
-
-// 更新函数会修改队列中指定元素的优先级以及值。
-func (pq *PriorityQueue) update(item *Node, priority int) {
-	item.roomNum = priority
-	heap.Fix(pq, item.index)
-}
 
 func setRobot(p Node, x, y int) {
 	//复制一份快照p
@@ -188,4 +130,60 @@ func setRobot(p Node, x, y int) {
 	}
 	heap.Push(&pq, node)
 	pq.update(&node, node.roomNum)
+}
+
+func initNode(node Node) Node {
+	node.i = 1
+	node.j = 1
+
+	//在博物馆上下扩充两行
+	for i := 0; i < m+1; i++ {
+		node.roomWatched[i][0] = 1
+		node.roomWatched[i][m+1] = 1
+	}
+	//在博物馆左右扩充两列
+	for i := 0; i < n+1; i++ {
+		node.roomWatched[0][i] = 1
+		node.roomWatched[n+1][i] = 1
+	}
+	return node
+}
+
+func (pq PriorityQueue) Len() int { return len(pq) }
+
+func (pq PriorityQueue) Less(i, j int) bool {
+	// 我们希望 Pop 返回的是最大值而不是最小值，
+	// 因此这里使用大于号进行对比。
+	if pq[i].roomNum > pq[j].roomNum {
+		return true
+	}
+	return false
+}
+
+func (pq PriorityQueue) Swap(i, j int) {
+	pq[i], pq[j] = pq[j], pq[i]
+	pq[i].index = i
+	pq[j].index = j
+}
+
+func (pq *PriorityQueue) Push(x interface{}) {
+	n := len(*pq)
+	item := x.(*Node)
+	item.index = n
+	*pq = append(*pq, item)
+}
+
+func (pq *PriorityQueue) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	item.index = -1 // 为了安全性考虑而做的设置
+	*pq = old[0 : n-1]
+	return item
+}
+
+// 更新函数会修改队列中指定元素的优先级以及值。
+func (pq *PriorityQueue) update(item *Node, priority int) {
+	item.roomNum = priority
+	heap.Fix(pq, item.index)
 }
